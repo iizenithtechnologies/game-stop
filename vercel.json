@@ -1,13 +1,5 @@
 {
-  "functions": {
-    "api/server.py": {
-      "runtime": "python3.11"
-    }
-  },
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "api/server.py"
-    }
-  ]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm --prefix frontend ci && npm --prefix frontend run build",
+  "outputDirectory": "frontend/dist"
 }

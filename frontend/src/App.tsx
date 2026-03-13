@@ -7,45 +7,69 @@ type Game = {
   price: number;
 };
 
+const API =
+  import.meta.env.VITE_API_BASE_URL ??
+  (import.meta.env.DEV ? "http://127.0.0.1:8001" : "/api");
+
 function App() {
   const [games, setGames] = useState<Game[]>([]);
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-
-  const API = "http://127.0.0.1:8001";
+  const [error, setError] = useState("");
 
   const fetchGames = async () => {
-    const res = await fetch(`${API}/games`);
-    const data = await res.json();
-    setGames(data);
+    setError("");
+
+    try {
+      const res = await fetch(`${API}/games`);
+
+      if (!res.ok) {
+        throw new Error("Unable to load games.");
+      }
+
+      const data = (await res.json()) as Game[];
+      setGames(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to load games.");
+    }
   };
 
   useEffect(() => {
-    fetchGames();
+    void fetchGames();
   }, []);
 
   const addGame = async () => {
     if (!name || !price) return;
 
-    await fetch(`${API}/games`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        name,
-        price: Number(price),
-      }),
-    });
+    setError("");
 
-    setName("");
-    setPrice("");
-    fetchGames();
+    try {
+      const res = await fetch(`${API}/games`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name,
+          price: Number(price),
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Unable to add the game.");
+      }
+
+      setName("");
+      setPrice("");
+      void fetchGames();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to add the game.");
+    }
   };
 
   return (
     <div style={{ padding: "40px", fontFamily: "Arial" }}>
-      <h1>🎮 Game Stop Store</h1>
+      <h1>Game Stop Store</h1>
 
       <div style={{ marginBottom: "30px" }}>
         <h2>Add Game</h2>
@@ -72,12 +96,13 @@ function App() {
 
       <h2>Available Games</h2>
 
-      {games.length === 0 && <p>No games found</p>}
+      {error && <p>{error}</p>}
+      {games.length === 0 && !error && <p>No games found</p>}
 
       <ul>
         {games.map((game) => (
           <li key={game._id}>
-            {game.name} — ₹{game.price}
+            {game.name} - Rs. {game.price}
           </li>
         ))}
       </ul>
